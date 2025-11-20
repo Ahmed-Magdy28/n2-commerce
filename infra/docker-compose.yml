@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: n2-postgres
+    environment:
+      POSTGRES_USER: n2
+      POSTGRES_PASSWORD: n2pass
+      POSTGRES_DB: n2db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ../apps/back-end
+      dockerfile: Dockerfile.dev
+    container_name: n2-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../apps/back-end:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      DATABASE_URL: "postgresql://n2:n2pass@n2-postgres:5432/n2db"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ../apps/front-end
+      dockerfile: Dockerfile.dev
+    container_name: n2-frontend
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../apps/front-end:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3000"
+    depends_on:
+      - backend
+
+  prisma-studio:
+    image: node:20-alpine
+    container_name: n2-prisma-studio
+    working_dir: /usr/src/app
+    volumes:
+      - ../apps/back-end:/usr/src/app
+    command: npx prisma studio --port 5555
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://n2:n2pass@n2-postgres:5432/n2db
+    depends_on:
+      - postgres
+
+volumes:
+  pg_data:
