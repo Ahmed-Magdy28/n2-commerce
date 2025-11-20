@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # Make sure Docker daemon is running
 if ! systemctl is-active --quiet docker; then
     echo "Starting Docker service..."
